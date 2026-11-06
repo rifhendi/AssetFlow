@@ -1,0 +1,401 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN_ASSET
+  HR_ADMIN
+  EMPLOYEE
+  AUDITOR
+}
+
+enum EmploymentStatus {
+  PERMANENT
+  CONTRACT
+  PROBATION
+  INTERN
+  RESIGNED
+  RETIRED
+  MUTATED
+  TERMINATED
+}
+
+enum AssetCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  DAMAGED
+}
+
+enum AssetStatus {
+  AVAILABLE
+  ASSIGNED
+  IN_USE
+  MAINTENANCE
+  RETURNED
+  RETIRED
+  LOST
+  DISPOSED
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  RETURNED
+  TRANSFERRED
+}
+
+enum TransactionType {
+  CHECKOUT
+  CHECKIN
+  TRANSFER
+  MAINTENANCE_IN
+  MAINTENANCE_OUT
+  RETIREMENT
+  DISPOSAL
+  AUDIT_ADJUSTMENT
+}
+
+enum MaintenanceStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum BastType {
+  PENYERAHAN
+  PENGEMBALIAN
+  PENSIUN
+  NON_PENSIUN
+}
+
+enum BastStatus {
+  DRAFT
+  FINAL
+  SIGNED
+  ARCHIVED
+}
+
+model Company {
+  id               String            @id @default(uuid())
+  name             String
+  code             String            @unique
+  logoUrl          String?
+  address          String?
+  phone            String?
+  email            String?
+  website          String?
+  bastNumberFormat String            @default("BAST/{type}/{year}/{month}/{seq}")
+  signatureTitle1  String            @default("PIHAK PERTAMA (PENYERAH)")
+  signatureName1   String?
+  signatureTitle2  String            @default("PIHAK KEDUA (PENERIMA)")
+  signatureName2   String?
+  users            User[]
+  departments      Department[]
+  locations        AssetLocation[]
+  categories       AssetCategory[]
+  employees        Employee[]
+  assets           Asset[]
+  assignments      AssetAssignment[]
+  transactions     AssetTransaction[]
+  maintenances     AssetMaintenance[]
+  bastDocuments    BastDocument[]
+  bastTemplates    BastTemplate[]
+  auditLogs        AuditLog[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model User {
+  id                    String             @id @default(uuid())
+  companyId             String
+  employeeId            String?            @unique
+  name                  String
+  email                 String             @unique
+  password              String
+  role                  Role               @default(EMPLOYEE)
+  avatar                String?
+  isActive              Boolean            @default(true)
+  company               Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee              Employee?          @relation(fields: [employeeId], references: [id])
+  performedTransactions AssetTransaction[]
+  auditLogs             AuditLog[]
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+}
+
+model Department {
+  id          String     @id @default(uuid())
+  companyId   String
+  code        String
+  name        String
+  description String?
+  managerName String?
+  company     Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employees   Employee[]
+  assets      Asset[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@unique([companyId, code])
+}
+
+model AssetLocation {
+  id               String             @id @default(uuid())
+  companyId        String
+  code             String
+  name             String
+  building         String?
+  floor            String?
+  room             String?
+  description      String?
+  company          Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employees        Employee[]
+  assets           Asset[]
+  fromTransactions AssetTransaction[] @relation("FromLocation")
+  toTransactions   AssetTransaction[] @relation("ToLocation")
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@unique([companyId, code])
+}
+
+model AssetCategory {
+  id          String   @id @default(uuid())
+  companyId   String
+  code        String
+  name        String
+  description String?
+  icon        String?
+  prefix      String   @default("AST")
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assets      Asset[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([companyId, code])
+}
+
+model Employee {
+  id               String             @id @default(uuid())
+  companyId        String
+  nik              String
+  fullName         String
+  email            String
+  phone            String?
+  departmentId     String
+  position         String
+  employmentStatus EmploymentStatus   @default(PERMANENT)
+  joinDate         DateTime           @default(now())
+  endDate          DateTime?
+  terminationType  String?
+  locationId       String?
+  avatar           String?
+  notes            String?
+  isActive         Boolean            @default(true)
+  company          Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  department       Department         @relation(fields: [departmentId], references: [id])
+  location         AssetLocation?     @relation(fields: [locationId], references: [id])
+  user             User?
+  assignments      AssetAssignment[]
+  fromTransactions AssetTransaction[] @relation("FromEmployee")
+  toTransactions   AssetTransaction[] @relation("ToEmployee")
+  bastDocuments    BastDocument[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@unique([companyId, nik])
+}
+
+model Asset {
+  id              String             @id @default(uuid())
+  companyId       String
+  assetTag        String
+  name            String
+  categoryId      String
+  brand           String?
+  model           String?
+  serialNumber    String?
+  purchaseDate    DateTime?
+  purchasePrice   Float?
+  warrantyExpDate DateTime?
+  locationId      String?
+  departmentId    String?
+  condition       AssetCondition     @default(GOOD)
+  status          AssetStatus        @default(AVAILABLE)
+  notes           String?
+  imageUrl        String?
+  qrCode          String?
+  company         Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  category        AssetCategory      @relation(fields: [categoryId], references: [id])
+  location        AssetLocation?     @relation(fields: [locationId], references: [id])
+  department      Department?        @relation(fields: [departmentId], references: [id])
+  assignments     AssetAssignment[]
+  transactions    AssetTransaction[]
+  maintenances    AssetMaintenance[]
+  bastItems       BastDocumentItem[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@unique([companyId, assetTag])
+}
+
+model AssetAssignment {
+  id                 String           @id @default(uuid())
+  companyId          String
+  assetId            String
+  employeeId         String
+  checkoutDate       DateTime         @default(now())
+  expectedReturnDate DateTime?
+  actualReturnDate   DateTime?
+  checkoutCondition  AssetCondition   @default(GOOD)
+  returnCondition    AssetCondition?
+  checkoutNotes      String?
+  returnNotes        String?
+  accessories        String?
+  status             AssignmentStatus @default(ACTIVE)
+  checkoutBastId     String?
+  returnBastId       String?
+  company            Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  asset              Asset            @relation(fields: [assetId], references: [id])
+  employee           Employee         @relation(fields: [employeeId], references: [id])
+  checkoutBast       BastDocument?    @relation("CheckoutBast", fields: [checkoutBastId], references: [id])
+  returnBast         BastDocument?    @relation("ReturnBast", fields: [returnBastId], references: [id])
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model AssetTransaction {
+  id                String          @id @default(uuid())
+  companyId         String
+  transactionNumber String
+  type              TransactionType
+  assetId           String
+  fromEmployeeId    String?
+  toEmployeeId      String?
+  fromLocationId    String?
+  toLocationId      String?
+  date              DateTime        @default(now())
+  condition         AssetCondition  @default(GOOD)
+  notes             String?
+  performedById     String?
+  bastDocumentId    String?
+  company           Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  asset             Asset           @relation(fields: [assetId], references: [id])
+  fromEmployee      Employee?       @relation("FromEmployee", fields: [fromEmployeeId], references: [id])
+  toEmployee        Employee?       @relation("ToEmployee", fields: [toEmployeeId], references: [id])
+  fromLocation      AssetLocation?  @relation("FromLocation", fields: [fromLocationId], references: [id])
+  toLocation        AssetLocation?  @relation("ToLocation", fields: [toLocationId], references: [id])
+  performedBy       User?           @relation(fields: [performedById], references: [id])
+  bastDocument      BastDocument?   @relation(fields: [bastDocumentId], references: [id])
+  createdAt         DateTime        @default(now())
+}
+
+model AssetMaintenance {
+  id          String            @id @default(uuid())
+  companyId   String
+  assetId     String
+  title       String
+  description String?
+  cost        Float?
+  vendor      String?
+  startDate   DateTime          @default(now())
+  endDate     DateTime?
+  status      MaintenanceStatus @default(IN_PROGRESS)
+  performedById String?
+  company     Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  asset       Asset             @relation(fields: [assetId], references: [id])
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model BastDocument {
+  id                  String             @id @default(uuid())
+  companyId           String
+  documentNumber      String             @unique
+  type                BastType
+  title               String
+  date                DateTime           @default(now())
+  employeeId          String?
+  issuerName          String
+  issuerPosition      String
+  issuerDepartment    String?
+  recipientName       String
+  recipientNik        String?
+  recipientPosition   String?
+  recipientDepartment String?
+  reason              String?
+  effectiveDate       DateTime?
+  notes               String?
+  status              BastStatus         @default(FINAL)
+  snapshotData        String?
+  templateId          String?
+  company             Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee            Employee?          @relation(fields: [employeeId], references: [id])
+  template            BastTemplate?      @relation(fields: [templateId], references: [id])
+  items               BastDocumentItem[]
+  transactions        AssetTransaction[]
+  checkoutAssignments AssetAssignment[] @relation("CheckoutBast")
+  returnAssignments   AssetAssignment[] @relation("ReturnBast")
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model BastDocumentItem {
+  id             String         @id @default(uuid())
+  bastDocumentId String
+  assetId        String?
+  assetTag       String
+  assetName      String
+  brand          String?
+  model          String?
+  serialNumber   String?
+  condition      AssetCondition @default(GOOD)
+  notes          String?
+  accessories    String?
+  bastDocument   BastDocument   @relation(fields: [bastDocumentId], references: [id], onDelete: Cascade)
+  asset          Asset?         @relation(fields: [assetId], references: [id])
+  createdAt      DateTime       @default(now())
+}
+
+model BastTemplate {
+  id                 String         @id @default(uuid())
+  companyId          String
+  type               BastType
+  title              String
+  headerText         String
+  termsAndConditions String
+  footerText         String?
+  signatureTitle1    String         @default("PIHAK PERTAMA (PENYERAH)")
+  signatureName1     String?
+  signatureTitle2    String         @default("PIHAK KEDUA (PENERIMA)")
+  signatureName2     String?
+  isDefault          Boolean        @default(true)
+  company            Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bastDocuments      BastDocument[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+model AuditLog {
+  id            String   @id @default(uuid())
+  companyId     String
+  userId        String?
+  action        String
+  entity        String
+  entityId      String?
+  previousState String?
+  newState      String?
+  ipAddress     String?
+  userAgent     String?
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user          User?    @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
+}
