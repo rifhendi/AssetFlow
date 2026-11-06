@@ -273,3 +273,4 @@ node scripts/e2e-verify.js
 ## 🛡️ Lisensi & Hak Cipta
 Hak Cipta © 2026 **AssetFlow Enterprise Systems**. Dilindungi oleh undang-undang.
 Dirancang untuk keandalan, akuntabilitas inventaris, dan efisiensi operasional korporat Indonesia.
+
