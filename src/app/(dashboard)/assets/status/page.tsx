@@ -154,3 +154,4 @@ export default async function AssetStatusPage() {
     </div>
   );
 }
+

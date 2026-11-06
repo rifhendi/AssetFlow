@@ -503,3 +503,4 @@ export function Sidebar({ user, isOpen, onClose }: SidebarProps) {
     </>
   );
 }
+

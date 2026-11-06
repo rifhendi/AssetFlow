@@ -138,3 +138,4 @@ export async function logAudit({
     console.error('Failed to write audit log:', error);
   }
 }
+

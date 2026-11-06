@@ -56,3 +56,4 @@ export const TRANSACTION_TYPES = {
   DISPOSAL: { label: 'Pemusnahan (Disposal)', color: 'text-red-700 bg-red-50' },
   AUDIT_ADJUSTMENT: { label: 'Koreksi Audit', color: 'text-indigo-700 bg-indigo-50' },
 } as const;
+

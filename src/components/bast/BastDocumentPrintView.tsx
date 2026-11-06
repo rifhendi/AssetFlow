@@ -299,3 +299,4 @@ export function BastDocumentPrintView({ document }: BastDocumentProps) {
     </div>
   );
 }
+

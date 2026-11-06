@@ -44,3 +44,4 @@ export default async function BastPenyerahanPage() {
     </div>
   );
 }
+

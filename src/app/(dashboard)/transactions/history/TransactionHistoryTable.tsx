@@ -292,3 +292,4 @@ export function TransactionHistoryTable({
     </div>
   );
 }
+

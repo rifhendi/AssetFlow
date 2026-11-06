@@ -626,3 +626,4 @@ export default async function AssetDetailPage({ params }: AssetDetailPageProps) 
     </div>
   );
 }
+

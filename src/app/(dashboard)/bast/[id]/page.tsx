@@ -46,3 +46,4 @@ export default async function BastDetailPage({ params }: BastDetailPageProps) {
     </div>
   );
 }
+

@@ -399,3 +399,4 @@ model AuditLog {
   user          User?    @relation(fields: [userId], references: [id])
   createdAt     DateTime @default(now())
 }
+

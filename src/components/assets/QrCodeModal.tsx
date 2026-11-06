@@ -86,3 +86,4 @@ export function QrCodeModal({ open, onOpenChange, asset }: QrCodeModalProps) {
     </Dialog>
   );
 }
+

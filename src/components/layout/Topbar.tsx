@@ -262,3 +262,4 @@ export function Topbar({ user, onOpenSidebar }: TopbarProps) {
     </header>
   );
 }
+

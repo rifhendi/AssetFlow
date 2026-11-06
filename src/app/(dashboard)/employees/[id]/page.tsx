@@ -432,3 +432,4 @@ export default async function EmployeeDetailPage({ params }: EmployeeDetailPageP
     </div>
   );
 }
+

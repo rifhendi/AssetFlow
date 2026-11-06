@@ -31,3 +31,4 @@ export function parseExcelBuffer(buffer: Buffer): Record<string, any>[] {
   const worksheet = workbook.Sheets[firstSheetName];
   return XLSX.utils.sheet_to_json(worksheet);
 }
+
